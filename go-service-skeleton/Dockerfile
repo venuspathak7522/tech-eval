@@ -1,10 +1,6 @@
 FROM golang:1.15-alpine
 
-ENV BINARY_NAME="palindrome-message"
-
-ENV CGO_ENABLED=0
-
-WORKDIR /go/src/app
+WORKDIR /tech-eval/go-service-skeleton
 
 COPY ./go.mod ./
 COPY ./go.sum ./
@@ -15,6 +11,6 @@ RUN go mod download
 # copy all the files into the container image filesnapshot
 COPY . .
 
-RUN go build -o ../bin/${BINARY_NAME} .
+RUN go build -o main .
 
-CMD ["../bin/my-go-code"]
+CMD ["/tech-eval/go-service-skeleton/main"]

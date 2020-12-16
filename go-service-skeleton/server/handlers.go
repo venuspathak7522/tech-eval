@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"sre.qlik.com/palindrome/data-dao"
+	"sre.qlik.com/palindrome/data"
 )
 
 // handleGetMessages is the handler for GET request to fetch all messages
@@ -16,7 +16,10 @@ import (
 func (s *server) handleGetMessages() http.HandlerFunc {
 	return func(rw http.ResponseWriter, req *http.Request) {
 		s.logger.Info(req.Method, "Get All Messages")
-		messages := data.GetMessages()
+		messages, error := data.GetMessagesFromDB()
+		if error != nil {
+			s.logger.Error("Unable to fetch messages from DB", error)
+		}
 		rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 		err := data.ToJSON(messages, rw)
 		if err != nil {
@@ -36,7 +39,12 @@ func (s *server) handlePostMessage() http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		data.AddMessage(message)
+		isPalindrome := checkIfPalindrome(message.Text)
+		message.IsPalindrome = isPalindrome
+		error:= data.AddMessageToDB(message)
+		if error != nil {
+			s.logger.Error("Unable to add message to DB", error)
+		}
 		rw.WriteHeader(http.StatusCreated)
 	}
 }
@@ -45,15 +53,20 @@ func (s *server) handlePostMessage() http.HandlerFunc {
 func (s *server) handleGetSingleMessage() http.HandlerFunc {
 	// a separate response for message
 	type response struct {
-		MessageText  string `json:"messageText"`
-		IsPalindrome bool   `json:"isPalindrome"`
+		//MessageText  string `json:"messageText"`
+		//IsPalindrome bool   `json:"isPalindrome"`
+		ID     int    `json:"id"`
+		Text   string `json:"text"`
+		Sender string `json:"sender"`
+		Time   string `json:"time"`
+		IsPalindrome bool `json:"ispalindrome"`
 	}
 	return func(rw http.ResponseWriter, req *http.Request) {
 		// parse the request to fetch the id from the URI
 		pathVars := mux.Vars(req)
 		messageID, _ := strconv.Atoi(pathVars["id"])
 		// assuming each message gets its unique ID
-		message, err := data.GetMessageByID(messageID)
+		message, err := data.GetMessageFromDBByID(messageID)
 
 		switch err {
 		case nil:
@@ -67,8 +80,9 @@ func (s *server) handleGetSingleMessage() http.HandlerFunc {
 			return
 		}
 
-		isPalindrome := checkIfPalindrome(message.Text)
-		res := response{MessageText: message.Text, IsPalindrome: isPalindrome}
+		//isPalindrome := checkIfPalindrome(message.Text)
+		//res := response{MessageText: message.Text, IsPalindrome: isPalindrome}
+		res := response{ID: message.ID, Text: message.Text, Sender: message.Sender, Time: message.Time, IsPalindrome: message.IsPalindrome}
 		err = data.ToJSON(res, rw)
 		if err != nil {
 			http.Error(rw, "Internal error", http.StatusInternalServerError)
@@ -83,7 +97,7 @@ func (s *server) handleDeleteMessage() http.HandlerFunc {
 		pathVars := mux.Vars(req)
 		messageID, _ := strconv.Atoi(pathVars["id"])
 
-		err := data.DeleteMessageWithID(messageID)
+		err := data.DeleteMessageFromDBWithID(messageID)
 
 		switch err {
 		case nil:

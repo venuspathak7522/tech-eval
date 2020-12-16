@@ -1,6 +1,8 @@
 package server
 
-import "strings"
+import (
+	"strings"
+)
 
 // checkIfPalindrome checks to see if the given string is a palindrome
 func checkIfPalindrome(s string) bool {
@@ -11,16 +13,12 @@ func checkIfPalindrome(s string) bool {
 	// two indices to keep track of each character from left and right
 	var left, right = 0, len(s) - 1
 	for left <= right {
-		if strings.ToLower(string(s[right])) < string('a') ||
-			strings.ToLower(string(s[right])) > string('z') { // jump over the non-alphabet character from right
-			right--
-		} else if strings.ToLower(string(s[left])) < string('a') ||
-			strings.ToLower(string(s[left])) > string('z') { // jump over the non-alphabet character from left
-			left++
-		} else if strings.ToLower(string(s[right])) !=
-			strings.ToLower(string(s[left])) { // characters at both ends don't match
+		if strings.ToLower(string(s[right])) !=
+			strings.ToLower(string(s[left])) { 
+			// characters at both ends don't match
 			return false
-		} else { // characters at both ends match
+		} else { 
+			// characters at both ends match
 			left++
 			right--
 		}

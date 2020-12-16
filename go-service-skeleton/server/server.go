@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -19,12 +18,14 @@ type server struct {
 
 var _ Server = (*server)(nil)
 
-const servicePort = os.Getenv("PORT")
+//const servicePort = os.Getenv("PORT")
+const servicePort = "8080"
 
 // NewServer returns an instance of server configured with logger and router
 func NewServer() Server {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api/v1").Subrouter()
+	
 	return &server{
 		router: s,
 		logger: logger.GetLogger(),
